@@ -292,6 +292,13 @@ class SearchQuerySet(object):
         clone.query.add_highlight()
         return clone
     
+    def only(self, *args):
+        clone = self._clone()
+        clone.query.clear_fields()
+        for field in args:
+            clone.query.add_field(field)
+        return clone
+
     def models(self, *models):
         """Accepts an arbitrary number of Model classes to include in the search."""
         clone = self._clone()

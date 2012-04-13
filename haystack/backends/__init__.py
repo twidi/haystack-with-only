@@ -7,7 +7,7 @@ from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils import tree
 from django.utils.encoding import force_unicode
-from haystack.constants import DJANGO_CT, VALID_FILTERS, FILTER_SEPARATOR
+from haystack.constants import DJANGO_CT, DJANGO_ID, ID, VALID_FILTERS, FILTER_SEPARATOR
 from haystack.exceptions import SearchBackendError, MoreLikeThisError, FacetingError
 from haystack.models import SearchResult
 try:
@@ -278,6 +278,7 @@ class BaseSearchQuery(object):
     def __init__(self, site=None, backend=None):
         self.query_filter = SearchNode()
         self.order_by = []
+        self.fields = set()
         self.models = set()
         self.boost = {}
         self.start_offset = 0
@@ -505,6 +506,9 @@ class BaseSearchQuery(object):
         else:
             final_query = query
         
+        if len(self.fields):
+            self.fields.update((DJANGO_CT, DJANGO_ID, ID))
+
         if self.boost:
             boost_list = []
             
@@ -599,6 +603,12 @@ class BaseSearchQuery(object):
         """
         self.order_by = []
     
+    def add_field(self, field):
+        self.fields.add(field)
+
+    def clear_fields(self):
+        self.fields = set()
+
     def add_model(self, model):
         """
         Restricts the query requiring matches in the given model.
@@ -729,6 +739,7 @@ class BaseSearchQuery(object):
         clone = klass()
         clone.query_filter = deepcopy(self.query_filter)
         clone.order_by = self.order_by[:]
+        clone.fields = self.fields.copy()
         clone.models = self.models.copy()
         clone.boost = self.boost.copy()
         clone.highlight = self.highlight

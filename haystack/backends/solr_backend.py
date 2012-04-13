@@ -108,7 +108,7 @@ class SearchBackend(BaseSearchBackend):
             }
         
         kwargs = {
-            'fl': '* score',
+            'fl': '*,score',
         }
         
         if fields:
@@ -186,7 +186,8 @@ class SearchBackend(BaseSearchBackend):
     
     def more_like_this(self, model_instance, additional_query_string=None,
                        start_offset=0, end_offset=None,
-                       limit_to_registered_models=None, result_class=None, **kwargs):
+                       limit_to_registered_models=None, result_class=None, fields=None,
+                       **kwargs):
         # Handle deferred models.
         if get_proxied_model and hasattr(model_instance, '_deferred') and model_instance._deferred:
             model_klass = get_proxied_model(model_instance._meta)
@@ -199,6 +200,10 @@ class SearchBackend(BaseSearchBackend):
             'fl': '*,score',
         }
         
+        if fields:
+            fields.add('score')
+            params['fl'] = ','.join(fields)
+
         if start_offset is not None:
             params['start'] = start_offset
         
@@ -443,6 +448,10 @@ class SearchQuery(BaseSearchQuery):
             
             kwargs['sort_by'] = ", ".join(order_by_list)
         
+        if self.fields:
+            self.fields.add('score')
+            kwargs['fields'] = ",".join(self.fields)
+
         if self.end_offset is not None:
             kwargs['end_offset'] = self.end_offset
         
